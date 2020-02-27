@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:amq="http://activemq.apache.org/schema/core"
+	xmlns:jms="http://www.springframework.org/schema/jms"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans-4.3.xsd 
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context-4.3.xsd 
+		http://activemq.apache.org/schema/core
+		http://activemq.apache.org/schema/core/activemq-core-5.15.11.xsd 
+		http://www.springframework.org/schema/jms
+		http://www.springframework.org/schema/jms/spring-jms-4.3.xsd">
+
+	<context:component-scan base-package="com.ma" >
+		<context:exclude-filter type="annotation" expression="org.springframework.context.annotation.Configuration"/>
+	</context:component-scan>
+	
+	<amq:connectionFactory id="amqConnectionFactory" brokerURL="tcp://127.0.0.1:61616" userName="" password=""/>
+	
+	<bean id="connectionFactory" class="org.springframework.jms.connection.CachingConnectionFactory">
+		<property name="targetConnectionFactory" ref="amqConnectionFactory"/>
+		<property name="sessionCacheSize" value="100"/>
+	</bean>
+	<bean id="jmsTopicTemplate" class="org.springframework.jms.core.JmsTemplate">
+		<property name="connectionFactory" ref="connectionFactory"/>
+		<property name="pubSubDomain" value="true"/>
+	</bean>
+	<bean id="jmsQueueTemplate" class="org.springframework.jms.core.JmsTemplate">
+		<property name="connectionFactory" ref="connectionFactory"/>
+		<property name="pubSubDomain" value="false"/>
+	</bean>
+	<jms:listener-container acknowledge="auto" destination-type="queue" 
+		container-type="default" connection-factory="connectionFactory">
+		<jms:listener destination="replyTo" ref="getResponse"/>
+	</jms:listener-container>
+	
+</beans>
